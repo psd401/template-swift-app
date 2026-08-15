@@ -26,9 +26,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
       - name: Toolchain versions (evidence)
-        run: |
-          swift --version
-          swiftlint version
+        run: swift --version
 
       - name: Build
         run: swift build
@@ -36,7 +34,11 @@ jobs:
       - name: Test
         run: swift test
 
-      # SwiftLint ships preinstalled on the macos-15 runner image
-      # (0.65.0 at the time of writing) — no install step needed.
+      # The runner-images README lists SwiftLint for macos-15, but the
+      # deployed image does not have it on PATH (verified: run 31853132495
+      # failed with `swiftlint: command not found`). Install via brew.
+      - name: Install SwiftLint
+        run: brew install swiftlint
+
       - name: Lint
         run: swiftlint lint --strict --reporter github-actions-logging

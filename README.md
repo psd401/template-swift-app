@@ -7,8 +7,8 @@ PSD401 template for macOS apps. Swift Package Manager + SwiftUI + Swift Testing,
 - **Testable-by-construction layout**: `TemplateAppKit` library target holds all logic; the `TemplateApp` executable target is a thin SwiftUI shell. The example behavior is a bounded `CounterModel` (clamping, failable validated init) plus a `CountFormatter` (empty/singular/plural display labels).
 - **Swift Testing suite**: 8 tests / 12 cases using `#expect`, `try #require`, `@Suite`, and parameterized `@Test(arguments:)` — exact-value assertions, boundary and rejection paths. UI testing, when you add it, stays XCTest/XCUITest per the PSD testing standard.
 - **Lint + format**: SwiftLint (`.swiftlint.yml`, sensible opt-ins, `--strict` in CI) and swift-format (`.swift-format`, 4-space indent, 120 cols). Autocorrect: `swiftlint --fix` and `swift format --in-place --recursive Sources Tests`.
-- **Self-contained macOS CI** (`.github/workflows/psd-ci.yml`, `macos-15`, SHA-pinned actions): build + test + strict lint. SwiftLint is preinstalled on the runner image.
-- **Release scaffolding**: `release-macos.yml` ships fully commented out — Developer ID signing, notarization, and .pkg publishing modeled on atrium-capture, referencing the org `MACOS_*` secrets. Activate it when the app ships to Jamf Self Service via the psd-sign pipeline.
+- **Self-contained macOS CI** (`.github/workflows/psd-ci.yml`, `macos-15`, SHA-pinned actions): build + test + strict lint (SwiftLint installed via brew — it is not on the runner's PATH despite the image README).
+- **Release scaffolding**: `release-macos.yml.disabled` ships fully commented out — Developer ID signing, notarization, and .pkg publishing modeled on atrium-capture, referencing the org `MACOS_*` secrets. Rename + uncomment when the app ships to Jamf Self Service via the psd-sign pipeline (a comments-only `.yml` in `workflows/` registers a failing run on every push, hence the suffix).
 - **PSD standard kit**: claude-review + license-check org reusable callers, Dependabot (github-actions + swift, weekly, minor/patch grouped), MIT LICENSE, map-style CLAUDE.md.
 
 ## Swift CI is different — read this
@@ -19,13 +19,13 @@ Consequence for branch protection: a direct job produces the check context **`ps
 
 ## First 10 minutes
 
-1. **Rename**: `name` in `Package.swift`, the three target names and their directories under `Sources/` and `Tests/`, the `@main` struct in `Sources/TemplateApp/TemplateApp.swift`, and the artifact names in the commented `release-macos.yml`. Naming: lowercase-kebab repo, `psd-` prefix for district-specific apps.
+1. **Rename**: `name` in `Package.swift`, the three target names and their directories under `Sources/` and `Tests/`, the `@main` struct in `Sources/TemplateApp/TemplateApp.swift`, and the artifact names in `release-macos.yml.disabled`. Naming: lowercase-kebab repo, `psd-` prefix for district-specific apps.
 2. **Set repo custom properties**: `tier` (default `c-experiment`), `owner`, `lifecycle: active`; add topics (`swift`, `macos`, …).
 3. **Verify green**: `swift build && swift test && swiftlint lint --strict` (install SwiftLint locally with `brew install swiftlint` if needed).
 4. **Run it**: `swift run TemplateApp` — a window with the bounded counter appears.
 5. **Review CLAUDE.md** and prune it to your app.
 6. Replace `CounterModel`/`CountFormatter` and their tests with your real domain logic — never leave the repo with zero tests.
-7. **When ready to ship**: follow the header in `.github/workflows/release-macos.yml` (build-pkg script + `MACOS_*` secrets), then hand the notarized .pkg to Technology Services for Jamf Self Service.
+7. **When ready to ship**: follow the header in `.github/workflows/release-macos.yml.disabled` (rename, uncomment, build-pkg script, `MACOS_*` secrets), then hand the notarized .pkg to Technology Services for Jamf Self Service.
 
 ## Commands
 

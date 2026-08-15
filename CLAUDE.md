@@ -29,7 +29,7 @@ swift run TemplateApp                              # launch the app window local
 - `Sources/TemplateApp/TemplateApp.swift` — `@main` App + `ContentView`; binds to library types only.
 - `Tests/TemplateAppKitTests/` — one test file per source file; exact-value assertions; parameterized tests for input families.
 - `.github/workflows/psd-ci.yml` — **self-contained** (macos-15). Swift repos do NOT call the org reusable CI (it runs ubuntu). Check context is `psd-ci`, not `psd-ci / psd-ci` — rulesets must list both.
-- `.github/workflows/release-macos.yml` — commented-out signing/notarization scaffolding (psd-sign → Jamf); activate when shipping.
+- `.github/workflows/release-macos.yml.disabled` — commented-out signing/notarization scaffolding (psd-sign → Jamf); rename + uncomment when shipping.
 
 ## Conventions
 
@@ -47,7 +47,7 @@ swift run TemplateApp                              # launch the app window local
 - Assertion-free tests; deleting or skipping a failing test to get green.
 - Committing an `.xcodeproj`, `xcuserdata/`, or `.build/`.
 - Switching CI to the org reusable workflow — it runs ubuntu and cannot build Swift/macOS.
-- Un-commenting release-macos.yml without a working `scripts/build-macos-pkg.sh` and the MACOS_* secrets confirmed.
+- Activating release-macos.yml.disabled without a working `scripts/build-macos-pkg.sh` and the MACOS_* secrets confirmed.
 
 ## PR evidence bar
 

@@ -1,10 +1,14 @@
 # ============================================================================
-# RELEASE SCAFFOLDING — INTENTIONALLY COMMENTED OUT
+# RELEASE SCAFFOLDING — INTENTIONALLY DISABLED (.disabled suffix + commented)
 #
 # This workflow is inert until your app is ready to ship to Jamf Self Service
 # via the psd-sign pipeline (sign → notarize → staple → pkgbuild → notarize
 # pkg → verify). It is modeled on PSD401/atrium-capture's release-macos.yml,
 # the flagship pattern for district macOS releases.
+#
+# The `.disabled` suffix keeps GitHub Actions from parsing the file: a
+# comments-only .yml in .github/workflows/ registers a FAILING "workflow file
+# issue" run on every push (verified: run 31853130309 on this repo).
 #
 # To activate:
 #   1. Write a `scripts/build-macos-pkg.sh` that wraps the SPM binary in a
@@ -18,7 +22,8 @@
 #        MACOS_DEVELOPER_ID_INSTALLER_P12 / _PASSWORD
 #        MACOS_BUILD_KEYCHAIN_PASSWORD
 #        MACOS_NOTARY_PRIVATE_KEY / MACOS_NOTARY_KEY_ID / MACOS_NOTARY_ISSUER_ID
-#   3. Uncomment everything below this header block and adjust names/paths.
+#   3. Rename this file to release-macos.yml, uncomment everything below
+#      this header block, and adjust names/paths.
 #   4. Hand the notarized .pkg to Technology Services for Jamf Self Service.
 # ============================================================================
 #
