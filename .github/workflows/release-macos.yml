@@ -1,0 +1,151 @@
+# ============================================================================
+# RELEASE SCAFFOLDING — INTENTIONALLY COMMENTED OUT
+#
+# This workflow is inert until your app is ready to ship to Jamf Self Service
+# via the psd-sign pipeline (sign → notarize → staple → pkgbuild → notarize
+# pkg → verify). It is modeled on PSD401/atrium-capture's release-macos.yml,
+# the flagship pattern for district macOS releases.
+#
+# To activate:
+#   1. Write a `scripts/build-macos-pkg.sh` that wraps the SPM binary in a
+#      .app bundle (Info.plist, icon), signs it with the Developer ID
+#      Application identity, notarizes, staples, builds the .pkg with the
+#      Developer ID Installer identity, and notarizes the pkg — or run the
+#      psd-sign skill locally to generate one. atrium-capture's script is the
+#      reference implementation.
+#   2. Confirm the org MACOS_* secrets are available to this repo:
+#        MACOS_DEVELOPER_ID_APPLICATION_P12 / _PASSWORD
+#        MACOS_DEVELOPER_ID_INSTALLER_P12 / _PASSWORD
+#        MACOS_BUILD_KEYCHAIN_PASSWORD
+#        MACOS_NOTARY_PRIVATE_KEY / MACOS_NOTARY_KEY_ID / MACOS_NOTARY_ISSUER_ID
+#   3. Uncomment everything below this header block and adjust names/paths.
+#   4. Hand the notarized .pkg to Technology Services for Jamf Self Service.
+# ============================================================================
+#
+# name: Release macOS installer
+#
+# on:
+#   workflow_dispatch:
+#     inputs:
+#       version:
+#         description: Three-part release version already committed to main
+#         required: true
+#         type: string
+#   push:
+#     tags:
+#       - 'v*'
+#
+# permissions:
+#   contents: write
+#
+# concurrency:
+#   group: macos-release-${{ github.ref }}
+#   cancel-in-progress: false
+#
+# jobs:
+#   release:
+#     runs-on: macos-15
+#     steps:
+#       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+#         with:
+#           fetch-depth: 0
+#           ref: ${{ github.event_name == 'workflow_dispatch' && 'main' || github.ref }}
+#
+#       - name: Resolve and verify release ref
+#         env:
+#           REQUESTED_VERSION: ${{ inputs.version }}
+#         run: |
+#           git fetch origin main --tags
+#           if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+#             version="$REQUESTED_VERSION"
+#             if ! printf '%s' "$version" | grep -Eq '^[0-9]+\.[0-9]+\.[0-9]+$'; then
+#               echo "Version must use major.minor.patch." >&2
+#               exit 1
+#             fi
+#             release_tag="v$version"
+#           else
+#             release_tag="$GITHUB_REF_NAME"
+#           fi
+#           git merge-base --is-ancestor "$GITHUB_SHA" origin/main
+#           echo "RELEASE_TAG=$release_tag" >> "$GITHUB_ENV"
+#
+#       - name: Run engineering gates
+#         run: |
+#           swift build
+#           swift test
+#           swiftlint lint --strict
+#
+#       - name: Import Developer ID certificates
+#         env:
+#           APPLICATION_P12: ${{ secrets.MACOS_DEVELOPER_ID_APPLICATION_P12 }}
+#           APPLICATION_P12_PASSWORD: ${{ secrets.MACOS_DEVELOPER_ID_APPLICATION_P12_PASSWORD }}
+#           INSTALLER_P12: ${{ secrets.MACOS_DEVELOPER_ID_INSTALLER_P12 }}
+#           INSTALLER_P12_PASSWORD: ${{ secrets.MACOS_DEVELOPER_ID_INSTALLER_P12_PASSWORD }}
+#           KEYCHAIN_PASSWORD: ${{ secrets.MACOS_BUILD_KEYCHAIN_PASSWORD }}
+#         run: |
+#           if [ -z "$APPLICATION_P12" ] || [ -z "$APPLICATION_P12_PASSWORD" ] ||
+#              [ -z "$INSTALLER_P12" ] || [ -z "$INSTALLER_P12_PASSWORD" ] ||
+#              [ -z "$KEYCHAIN_PASSWORD" ]; then
+#             echo "Developer ID release secrets are incomplete." >&2
+#             exit 1
+#           fi
+#           keychain="$RUNNER_TEMP/release.keychain-db"
+#           printf '%s' "$APPLICATION_P12" | base64 --decode > "$RUNNER_TEMP/application.p12"
+#           printf '%s' "$INSTALLER_P12" | base64 --decode > "$RUNNER_TEMP/installer.p12"
+#           security create-keychain -p "$KEYCHAIN_PASSWORD" "$keychain"
+#           security set-keychain-settings -lut 21600 "$keychain"
+#           security unlock-keychain -p "$KEYCHAIN_PASSWORD" "$keychain"
+#           security import "$RUNNER_TEMP/application.p12" \
+#             -k "$keychain" -P "$APPLICATION_P12_PASSWORD" -T /usr/bin/codesign
+#           security import "$RUNNER_TEMP/installer.p12" \
+#             -k "$keychain" -P "$INSTALLER_P12_PASSWORD" -T /usr/bin/productbuild
+#           security list-keychains -d user -s "$keychain"
+#           security set-key-partition-list -S apple-tool:,apple: \
+#             -s -k "$KEYCHAIN_PASSWORD" "$keychain"
+#           echo "RELEASE_KEYCHAIN=$keychain" >> "$GITHUB_ENV"
+#
+#       - name: Build, sign, notarize, and verify installer
+#         env:
+#           NOTARY_PRIVATE_KEY: ${{ secrets.MACOS_NOTARY_PRIVATE_KEY }}
+#           NOTARY_KEY_ID: ${{ secrets.MACOS_NOTARY_KEY_ID }}
+#           NOTARY_ISSUER_ID: ${{ secrets.MACOS_NOTARY_ISSUER_ID }}
+#         run: |
+#           if [ -z "$NOTARY_PRIVATE_KEY" ] || [ -z "$NOTARY_KEY_ID" ] ||
+#              [ -z "$NOTARY_ISSUER_ID" ]; then
+#             echo "Apple notarization secrets are incomplete." >&2
+#             exit 1
+#           fi
+#           printf '%s' "$NOTARY_PRIVATE_KEY" > "$RUNNER_TEMP/notary-key.p8"
+#           chmod 600 "$RUNNER_TEMP/notary-key.p8"
+#           app_identity="$(
+#             security find-identity -v -p codesigning "$RELEASE_KEYCHAIN" |
+#               sed -n 's/.*"\(Developer ID Application:.*\)"/\1/p' |
+#               head -n 1
+#           )"
+#           installer_identity="$(
+#             security find-identity -v -p basic "$RELEASE_KEYCHAIN" |
+#               sed -n 's/.*"\(Developer ID Installer:.*\)"/\1/p' |
+#               head -n 1
+#           )"
+#           if [ -z "$app_identity" ] || [ -z "$installer_identity" ]; then
+#             echo "Imported certificates do not contain both Developer ID identities." >&2
+#             exit 1
+#           fi
+#           CODESIGN_IDENTITY="$app_identity" \
+#           INSTALLER_IDENTITY="$installer_identity" \
+#           NOTARY_KEY_PATH="$RUNNER_TEMP/notary-key.p8" \
+#           EXPECTED_TAG="$RELEASE_TAG" \
+#             scripts/build-macos-pkg.sh
+#
+#       - name: Stage and publish GitHub release
+#         env:
+#           GH_TOKEN: ${{ github.token }}
+#         run: |
+#           version="${RELEASE_TAG#v}"
+#           artifact="dist/macos/TemplateApp-$version.pkg"
+#           gh release create "$RELEASE_TAG" \
+#             "$artifact#TemplateApp $version macOS installer" \
+#             "$artifact.sha256#SHA-256 checksum" \
+#             --generate-notes \
+#             --title "TemplateApp $version" \
+#             --draft

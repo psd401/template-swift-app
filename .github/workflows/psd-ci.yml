@@ -1,0 +1,42 @@
+# Self-contained CI for Swift repos.
+#
+# Swift repos DO NOT call PSD401/.github/reusable-psd-ci.yml: the reusable
+# workflow runs on ubuntu and Swift/macOS builds need a macOS runner. This
+# workflow reproduces the same gates (build + test + lint) directly.
+#
+# REQUIRED-CHECK CONTEXT CAVEAT: because `psd-ci` here is a direct job (not a
+# `uses:` call into the reusable workflow), the check context this repo
+# produces is "psd-ci" — NOT "psd-ci / psd-ci" like repos that call the
+# reusable. Org rulesets that require the psd-ci status must list BOTH
+# contexts ("psd-ci" and "psd-ci / psd-ci") to cover Swift and non-Swift
+# repos alike.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  psd-ci:
+    name: psd-ci
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Toolchain versions (evidence)
+        run: |
+          swift --version
+          swiftlint version
+
+      - name: Build
+        run: swift build
+
+      - name: Test
+        run: swift test
+
+      # SwiftLint ships preinstalled on the macos-15 runner image
+      # (0.65.0 at the time of writing) — no install step needed.
+      - name: Lint
+        run: swiftlint lint --strict --reporter github-actions-logging

@@ -1,0 +1,33 @@
+# SwiftLint — sensible defaults, not maximal.
+# CI runs `swiftlint lint --strict` (warnings fail the build), so every rule
+# enabled here is a real gate. Autocorrect: `swiftlint --fix`.
+
+included:
+  - Sources
+  - Tests
+
+opt_in_rules:
+  - contains_over_filter_count
+  - contains_over_filter_is_empty
+  - empty_string
+  - first_where
+  - last_where
+  - sorted_first_last
+  - toggle_bool
+  - unneeded_parentheses_in_closure_argument
+
+line_length:
+  warning: 120
+  ignores_comments: true
+  ignores_urls: true
+
+identifier_name:
+  min_length: 2 # allow `x`, `id`-style names to warn, single chars only in loops
+
+nesting:
+  type_level: 2
+
+# Templates keep TODO markers out of main; delete this override if your team
+# tracks TODOs in-code deliberately.
+todo:
+  severity: error

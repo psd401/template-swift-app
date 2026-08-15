@@ -1,0 +1,19 @@
+# SPM (Package.resolved IS committed once you add dependencies)
+.build/
+.swiftpm/
+
+# Xcode
+xcuserdata/
+DerivedData/
+*.xcresult
+*.xccheckout
+
+# macOS
+.DS_Store
+
+# Signing/release artifacts (psd-sign pipeline outputs)
+dist/
+*.p12
+*.p8
+*.pkg
+*.dmg
