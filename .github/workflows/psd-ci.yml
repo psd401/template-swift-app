@@ -1,15 +1,12 @@
-# Self-contained CI for Swift repos.
+# CI for Swift repos.
 #
-# Swift repos DO NOT call PSD401/.github/reusable-psd-ci.yml: the reusable
-# workflow runs on ubuntu and Swift/macOS builds need a macOS runner. This
-# workflow reproduces the same gates (build + test + lint) directly.
-#
-# REQUIRED-CHECK CONTEXT CAVEAT: because `psd-ci` here is a direct job (not a
-# `uses:` call into the reusable workflow), the check context this repo
-# produces is "psd-ci" — NOT "psd-ci / psd-ci" like repos that call the
-# reusable. Org rulesets that require the psd-ci status must list BOTH
-# contexts ("psd-ci" and "psd-ci / psd-ci") to cover Swift and non-Swift
-# repos alike.
+# Swift repos don't call PSD401/.github reusable-psd-ci.yml: that workflow runs
+# on ubuntu, and Swift/macOS builds need a macOS runner. The gates (build, test,
+# lint) live in psd-ci-swift.yml, a local reusable workflow, and this job calls
+# it. Calling it through a job named psd-ci makes the check context
+# "psd-ci / psd-ci", the same context every other PSD401 repo reports and the
+# only one the org rulesets require (psd-dev-standards rulesets/, 2026-10-10).
+# A direct job would report plain "psd-ci", which the rulesets don't accept.
 name: CI
 
 on:
@@ -17,28 +14,9 @@ on:
   push:
     branches: [main]
 
+permissions:
+  contents: read
+
 jobs:
   psd-ci:
-    name: psd-ci
-    runs-on: macos-15
-    timeout-minutes: 30
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - name: Toolchain versions (evidence)
-        run: swift --version
-
-      - name: Build
-        run: swift build
-
-      - name: Test
-        run: swift test
-
-      # The runner-images README lists SwiftLint for macos-15, but the
-      # deployed image does not have it on PATH (verified: run 31853132495
-      # failed with `swiftlint: command not found`). Install via brew.
-      - name: Install SwiftLint
-        run: brew install swiftlint
-
-      - name: Lint
-        run: swiftlint lint --strict --reporter github-actions-logging
+    uses: ./.github/workflows/psd-ci-swift.yml
