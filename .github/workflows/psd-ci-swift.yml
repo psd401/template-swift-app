@@ -1,0 +1,35 @@
+# Swift build, test and lint gates, called by psd-ci.yml (see the note there on
+# why this is a separate reusable workflow).
+name: psd-ci (Swift)
+
+on:
+  workflow_call:
+
+permissions:
+  contents: read
+
+jobs:
+  psd-ci:
+    name: psd-ci
+    runs-on: macos-15
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Toolchain versions (evidence)
+        run: swift --version
+
+      - name: Build
+        run: swift build
+
+      - name: Test
+        run: swift test
+
+      # The runner-images README lists SwiftLint for macos-15, but the
+      # deployed image does not have it on PATH (verified: run 31853132495
+      # failed with `swiftlint: command not found`). Install via brew.
+      - name: Install SwiftLint
+        run: brew install swiftlint
+
+      - name: Lint
+        run: swiftlint lint --strict --reporter github-actions-logging
