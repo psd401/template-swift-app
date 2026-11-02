@@ -18,6 +18,7 @@ swift run TemplateApp                              # launch the app window local
 
 - Logic goes in `TemplateAppKit`; the executable target stays a thin SwiftUI binding layer. If a behavior is worth testing, it does not live in `Sources/TemplateApp/`. `CounterModel` and `CountFormatter` are example behavior; replace them with your domain.
 - CI gates live in `psd-ci-swift.yml`, a local reusable workflow, called by the job named `psd-ci` in `psd-ci.yml`. That job name is what makes the check context `psd-ci / psd-ci`, the only one the org rulesets accept; don't rename it or inline the gates.
+- One test file per source file under `Tests/TemplateAppKitTests/`, with exact-value assertions.
 - New tests use Swift Testing: `#expect` for assertions, `try #require` to unwrap optionals, `arguments:` for input families. XCTest only for UI automation targets — Swift Testing does not cover UI automation.
 - Value types + `Sendable` by default; validated construction via failable inits rather than post-hoc checks.
 - Test-first for non-trivial logic; watch the test fail before making it pass. Existing tests are contracts: weakening or deleting an assertion must be declared in the PR body.

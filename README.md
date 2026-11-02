@@ -13,9 +13,9 @@ PSD401 template for macOS apps. Swift Package Manager + SwiftUI + Swift Testing,
 
 ## Swift CI is different — read this
 
-The org reusable CI (`PSD401/.github/reusable-psd-ci.yml`) runs on **ubuntu** and cannot build Swift/macOS, so this template's `psd-ci.yml` is a **self-contained workflow on `macos-15`** instead of a thin caller.
+The org reusable CI (`PSD401/.github/reusable-psd-ci.yml`) runs on **ubuntu** and cannot build Swift/macOS, so this template's gates live in `psd-ci-swift.yml`, a local reusable workflow on `macos-15`, instead of the org one.
 
-Consequence for branch protection: a direct job produces the check context **`psd-ci`**, while repos calling the reusable produce **`psd-ci / psd-ci`**. Org rulesets that require CI must list **both** contexts, or Swift repos will never satisfy the required check.
+Consequence for branch protection: `psd-ci.yml` calls that workflow from a job named `psd-ci`, so the check context is **`psd-ci / psd-ci`** — the same context every other PSD401 repo reports and the only one the org rulesets require (psd-dev-standards decision of 2026-10-10). A direct job would report plain `psd-ci`, which the rulesets don't accept, so don't rename the job or inline the gates.
 
 ## First 10 minutes
 
