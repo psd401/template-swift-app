@@ -9,7 +9,7 @@ PSD401 template for macOS apps. Swift Package Manager + SwiftUI + Swift Testing,
 - **Lint + format**: SwiftLint (`.swiftlint.yml`, sensible opt-ins, `--strict` in CI) and swift-format (`.swift-format`, 4-space indent, 120 cols). Autocorrect: `swiftlint --fix` and `swift format --in-place --recursive Sources Tests`.
 - **Self-contained macOS CI** (`.github/workflows/psd-ci.yml`, `macos-15`, SHA-pinned actions): build + test + strict lint (SwiftLint installed via brew — it is not on the runner's PATH despite the image README).
 - **Release scaffolding**: `release-macos.yml.disabled` ships fully commented out — Developer ID signing, notarization, and .pkg publishing modeled on atrium-capture, referencing the org `MACOS_*` secrets. Rename + uncomment when the app ships to Jamf Self Service via the psd-sign pipeline (a comments-only `.yml` in `workflows/` registers a failing run on every push, hence the suffix).
-- **PSD standard kit**: claude-review + license-check org reusable callers, Dependabot (github-actions + swift, weekly, minor/patch grouped), MIT LICENSE, map-style CLAUDE.md.
+- **PSD standard kit**: claude-review + license-check org reusable callers, Dependabot (github-actions + swift, weekly, minor/patch grouped), MIT LICENSE, map-style AGENTS.md (`CLAUDE.md` imports it).
 
 ## Swift CI is different — read this
 
@@ -23,7 +23,7 @@ Consequence for branch protection: a direct job produces the check context **`ps
 2. **Set repo custom properties**: `tier` (default `c-experiment`), `owner`, `lifecycle: active`; add topics (`swift`, `macos`, …).
 3. **Verify green**: `swift build && swift test && swiftlint lint --strict` (install SwiftLint locally with `brew install swiftlint` if needed).
 4. **Run it**: `swift run TemplateApp` — a window with the bounded counter appears.
-5. **Review CLAUDE.md** and prune it to your app.
+5. **Review AGENTS.md** and prune it to your app.
 6. Replace `CounterModel`/`CountFormatter` and their tests with your real domain logic — never leave the repo with zero tests.
 7. **When ready to ship**: follow the header in `.github/workflows/release-macos.yml.disabled` (rename, uncomment, build-pkg script, `MACOS_*` secrets), then hand the notarized .pkg to Technology Services for Jamf Self Service.
 
