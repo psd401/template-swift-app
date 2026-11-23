@@ -10,12 +10,16 @@
 name: CI
 
 on:
+  # pull_request only: a check doesn't re-run after the merge (psd-dev-standards standards/06 §4, Runner minutes).
   pull_request:
-  push:
-    branches: [main]
 
 permissions:
   contents: read
+
+# A new push to the PR cancels the run it supersedes (standards/06 §4).
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   psd-ci:

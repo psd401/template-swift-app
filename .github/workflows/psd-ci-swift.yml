@@ -9,8 +9,54 @@ permissions:
   contents: read
 
 jobs:
+  # Docs-only skip (psd-dev-standards standards/06 §4, Runner minutes): the
+  # macOS job is skipped when every changed file is Markdown (**/*.md) or
+  # openwiki/.last-update.json. One other file and it runs. psd-ci / psd-ci is
+  # a required check, so the skip lives in the job, not in paths-ignore: a
+  # workflow skipped by paths-ignore reports no status and the check would
+  # wait forever, while a skipped job counts as passing. If tests ever read
+  # .md fixtures, make those paths count as code in the case below.
+  # This runs on Linux (~$0.006/min) so the macOS job (~$0.062/min) never
+  # starts for a docs-only PR.
+  changes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    outputs:
+      docs_only: ${{ steps.diff.outputs.docs_only }}
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          # The PR merge commit and its first parent, the base branch.
+          fetch-depth: 2
+          persist-credentials: false
+
+      - name: List changed files
+        id: diff
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+        run: |
+          docs_only=false
+          if [ "$EVENT_NAME" = pull_request ]; then
+            docs_only=true
+            files=$(git diff --name-only HEAD^1 HEAD)
+            printf '%s\n' "$files"
+            while IFS= read -r f; do
+              [ -n "$f" ] || continue
+              case "$f" in
+                *.md|openwiki/.last-update.json) ;;
+                *) docs_only=false ;;
+              esac
+            done <<< "$files"
+          fi
+          echo "docs_only=$docs_only" | tee -a "$GITHUB_OUTPUT"
+
   psd-ci:
     name: psd-ci
+    needs: changes
+    # Runs unless the changes job said docs-only. If that job fails, its
+    # output is empty and the gates still run: a failure must never turn
+    # into a skip, which the required check would count as passing.
+    if: ${{ !cancelled() && needs.changes.outputs.docs_only != 'true' }}
     runs-on: macos-15
     timeout-minutes: 30
     steps:

@@ -7,9 +7,9 @@ PSD401 template for macOS apps. Swift Package Manager + SwiftUI + Swift Testing,
 - **Testable-by-construction layout**: `TemplateAppKit` library target holds all logic; the `TemplateApp` executable target is a thin SwiftUI shell. The example behavior is a bounded `CounterModel` (clamping, failable validated init) plus a `CountFormatter` (empty/singular/plural display labels).
 - **Swift Testing suite**: 8 tests / 12 cases using `#expect`, `try #require`, `@Suite`, and parameterized `@Test(arguments:)` — exact-value assertions, boundary and rejection paths. UI testing, when you add it, stays XCTest/XCUITest per the PSD testing standard.
 - **Lint + format**: SwiftLint (`.swiftlint.yml`, sensible opt-ins, `--strict` in CI) and swift-format (`.swift-format`, 4-space indent, 120 cols). Autocorrect: `swiftlint --fix` and `swift format --in-place --recursive Sources Tests`.
-- **Self-contained macOS CI** (`.github/workflows/psd-ci.yml`, `macos-15`, SHA-pinned actions): build + test + strict lint (SwiftLint installed via brew — it is not on the runner's PATH despite the image README).
+- **Self-contained macOS CI** (`.github/workflows/psd-ci.yml`, `macos-15`, SHA-pinned actions): build + test + strict lint (SwiftLint installed via brew — it is not on the runner's PATH despite the image README). Runs on pull requests only; a PR whose every changed file is Markdown skips the macOS job, and a new push cancels the superseded run.
 - **Release scaffolding**: `release-macos.yml.disabled` ships fully commented out — Developer ID signing, notarization, and .pkg publishing modeled on atrium-capture, referencing the org `MACOS_*` secrets. Rename + uncomment when the app ships to Jamf Self Service via the psd-sign pipeline (a comments-only `.yml` in `workflows/` registers a failing run on every push, hence the suffix).
-- **PSD standard kit**: claude-review + license-check org reusable callers, Dependabot (github-actions + swift, weekly, minor/patch grouped), MIT LICENSE, map-style AGENTS.md (`CLAUDE.md` imports it).
+- **PSD standard kit**: claude-review, security-scan and OpenWiki org reusable callers, Dependabot (github-actions + swift, weekly, minor/patch grouped), MIT LICENSE, map-style AGENTS.md (`CLAUDE.md` imports it).
 
 ## Swift CI is different — read this
 
