@@ -17,8 +17,8 @@ swift run TemplateApp                              # launch the app window local
 ## Conventions
 
 - Logic goes in `TemplateAppKit`; the executable target stays a thin SwiftUI binding layer. If a behavior is worth testing, it does not live in `Sources/TemplateApp/`. `CounterModel` and `CountFormatter` are example behavior; replace them with your domain.
-- CI gates live in `psd-ci-swift.yml`, a local reusable workflow, called by the job named `psd-ci` in `psd-ci.yml`. That job name is what makes the check context `psd-ci / psd-ci`, the only one the org rulesets accept; don't rename it or inline the gates.
-- `psd-ci-swift.yml` skips the macOS job when every changed file is `*.md` (its `changes` job decides). If tests start reading `.md` fixtures, make those paths count as code there.
+- CI gates live in job `swift` of `psd-ci.yml` (macos-15). Job `psd-ci` calls the org reusable `reusable-psd-ci.yml` with `if: always()`, `upstream-results` and `gate: "off"`, so it fails unless `swift` succeeded and the check context is `psd-ci / psd-ci`, the only one the org rulesets accept; don't rename job `psd-ci` or give it steps.
+- `swift` skips its gates when every changed file is `*.md` (the `changes` job decides): it then runs one echo step on a Linux runner. Keep that skip in the steps, never a job-level `if:` — the reusable fails on a skipped upstream job. If tests start reading `.md` fixtures, make those paths count as code in `changes`.
 - One test file per source file under `Tests/TemplateAppKitTests/`, with exact-value assertions.
 - New tests use Swift Testing: `#expect` for assertions, `try #require` to unwrap optionals, `arguments:` for input families. XCTest only for UI automation targets — Swift Testing does not cover UI automation.
 - Value types + `Sendable` by default; validated construction via failable inits rather than post-hoc checks.
@@ -33,7 +33,7 @@ swift run TemplateApp                              # launch the app window local
 - New unit tests written in XCTest (`XCTAssert*`) — Swift Testing is the standard for new unit tests.
 - Assertion-free tests; deleting or skipping a failing test to get green.
 - Committing an `.xcodeproj`, `xcuserdata/`, or `.build/` — this is a Swift Package Manager-only repo.
-- Switching CI to the org reusable workflow — it runs ubuntu and cannot build Swift/macOS.
+- Moving the Swift gates into the org reusable's own gate (`gate: auto`) — it runs ubuntu and cannot build Swift/macOS.
 - Activating release-macos.yml.disabled without a working `scripts/build-macos-pkg.sh` and the MACOS_* secrets confirmed.
 
 ## PR evidence bar
