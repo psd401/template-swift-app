@@ -77,6 +77,8 @@ jobs:
         run: echo "Docs-only change; the Swift gates do not run."
 
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
         if: needs.changes.outputs.docs_only != 'true'
 
       - name: Toolchain versions (evidence)
